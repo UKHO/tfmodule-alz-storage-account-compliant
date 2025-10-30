@@ -7,7 +7,7 @@ resource "azurerm_user_assigned_identity" "storage_cmk" {
   name                = "${var.storage_account_name}-identity"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
-  
+
   tags = var.tags
 }
 

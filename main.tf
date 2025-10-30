@@ -15,7 +15,8 @@
 # ├── private-endpoints.tf    - Private endpoints for blob/file services
 # ├── variables.tf            - Input variable definitions
 # ├── outputs.tf              - Module outputs
-# └── versions.tf             - Provider version constraints
+# ├── versions.tf             - Provider version constraints
+# └── MIGRATION-GUIDE.md      - Guide for migrating from legacy to non-legacy
 #
 # Key Features:
 # - Full ALZ compliance with strictest security settings
@@ -23,4 +24,9 @@
 # - Dual private endpoint support (primary + secondary subscriptions)
 # - User-assigned managed identity for secure key access
 # - Infrastructure encryption enabled
+# - ✅ Supports count, for_each, and depends_on (non-legacy module)
+#
+# Provider Configuration:
+# This module requires providers to be configured and passed from the calling
+# module. See MIGRATION-GUIDE.md for details on how to configure providers.
 # ==============================================================================

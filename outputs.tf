@@ -94,7 +94,7 @@ output "alz_compliance_features" {
     container_soft_delete_enabled     = true
     point_in_time_restore_enabled     = true
     customer_managed_key_enabled      = true
-    queue_encryption_cmk              = true  # NEW - Queue encrypted with CMK
-    table_encryption_cmk              = true  # NEW - Table encrypted with CMK
+    queue_encryption_cmk              = true # NEW - Queue encrypted with CMK
+    table_encryption_cmk              = true # NEW - Table encrypted with CMK
   }
 }

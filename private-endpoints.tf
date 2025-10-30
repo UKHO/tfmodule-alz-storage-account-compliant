@@ -26,7 +26,7 @@ resource "azurerm_private_endpoint" "blob_primary" {
   }
 
   tags = var.tags
-  
+
   depends_on = [azapi_resource.storage_account]
 }
 
@@ -50,7 +50,7 @@ resource "azurerm_private_endpoint" "file_primary" {
   }
 
   tags = var.tags
-  
+
   depends_on = [azapi_resource.storage_account]
 }
 
@@ -80,7 +80,7 @@ resource "azurerm_private_endpoint" "blob_secondary" {
   tags = merge(var.tags, {
     "Purpose" = "Cross-Subscription-DNS"
   })
-  
+
   depends_on = [azapi_resource.storage_account]
 }
 
@@ -106,6 +106,6 @@ resource "azurerm_private_endpoint" "file_secondary" {
   tags = merge(var.tags, {
     "Purpose" = "Cross-Subscription-DNS"
   })
-  
+
   depends_on = [azapi_resource.storage_account]
 }
