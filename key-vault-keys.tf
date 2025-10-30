@@ -24,14 +24,14 @@ resource "azurerm_key_vault_key" "storage_encryption" {
   # Key rotation policy for ongoing compliance
   rotation_policy {
     automatic {
-      time_before_expiry = "P30D"  # Rotate 30 days before expiry
+      time_before_expiry = "P30D" # Rotate 30 days before expiry
     }
 
-    expire_after         = "P89D"  # Expire after 89 days
-    notify_before_expiry = "P29D"  # Notify 29 days before expiry
+    expire_after         = "P89D" # Expire after 89 days
+    notify_before_expiry = "P29D" # Notify 29 days before expiry
   }
 
   depends_on = [
-    azurerm_role_assignment.storage_cmk_access  # Wait for RBAC to be assigned
+    azurerm_role_assignment.storage_cmk_access # Wait for RBAC to be assigned
   ]
 }

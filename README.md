@@ -90,11 +90,83 @@ Each file has a single responsibility, making it easy to locate and modify speci
   - oldhub subscription (primary DNS zones)
   - hub subscription (secondary DNS zones)
 
+### Provider Configuration
+
+**Important**: This module requires provider configurations to be passed from the caller. Configure providers in your root module:
+
+```hcl
+# Configure the default provider for the target subscription
+provider "azurerm" {
+  features {
+    key_vault {
+      purge_soft_delete_on_destroy = false
+    }
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+  }
+  
+  subscription_id            = var.subscription_id
+  storage_use_azuread        = true
+  skip_provider_registration = true
+}
+
+# Configure the oldhub provider for primary DNS zones
+provider "azurerm" {
+  alias                      = "oldhub"
+  features {}
+  subscription_id            = var.oldhub_subscription_id
+  skip_provider_registration = true
+}
+
+# Configure the hub provider for secondary DNS zones
+provider "azurerm" {
+  alias                      = "hub"
+  features {}
+  subscription_id            = var.hub_subscription_id
+  skip_provider_registration = true
+}
+```
+
+### Module Usage
+
+```hcl
+module "storage_account" {
+  source = "git::https://github.com/UKHO/tfmodule-alz-storage-account-compliant.git?ref=main"
+  
+  # Pass provider configurations
+  providers = {
+    azurerm        = azurerm
+    azurerm.oldhub = azurerm.oldhub
+    azurerm.hub    = azurerm.hub
+  }
+  
+  # Required variables
+  resource_group_name            = "your-rg"
+  storage_account_name           = "yourstorageacct"
+  key_vault_name                 = "your-keyvault"
+  virtual_network_name           = "your-vnet"
+  subnet_name                    = "pe-subnet"
+  vnet_resource_group_name       = "vnet-rg"
+  oldhub_dns_zone_resource_group = "primary-dns-rg"
+  hub_dns_zone_resource_group    = "secondary-dns-rg"
+  
+  # Optional: Enable/disable private endpoints
+  enable_primary_private_endpoints   = true
+  enable_secondary_private_endpoints = false
+  
+  # Now supports count, for_each, and depends_on!
+  count = var.create_storage ? 1 : 0
+  
+  depends_on = [
+    azurerm_resource_group.main_rg
+  ]
+}
+```
+
 ### Quick Start
 
 ```bash
-cd azurerm-native-implementation
-
 # Initialize
 terraform init
 
@@ -131,14 +203,16 @@ After testing, keep only the endpoint set you need.
 ### Required Variables
 ```hcl
 resource_group_name              = "your-rg"
+storage_account_name             = "yourstorageacct"
+key_vault_name                   = "your-keyvault"
 virtual_network_name             = "your-vnet"
 subnet_name                      = "pe-subnet"
 vnet_resource_group_name         = "vnet-rg"
-oldhub_subscription_id           = "primary-dns-sub-id"
 oldhub_dns_zone_resource_group   = "primary-dns-rg"
-hub_subscription_id              = "secondary-dns-sub-id"
 hub_dns_zone_resource_group      = "secondary-dns-rg"
 ```
+
+**Note**: Subscription IDs are now configured via provider blocks in the calling module, not as variables.
 
 ### Optional Customization
 ```hcl
