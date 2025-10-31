@@ -109,3 +109,37 @@ resource "azurerm_private_endpoint" "file_secondary" {
 
   depends_on = [azapi_resource.storage_account]
 }
+
+# ==============================================================================
+# Private DNS Zone Virtual Network Links - Primary (oldhub subscription)
+# ==============================================================================
+
+resource "azurerm_private_dns_zone_virtual_network_link" "blob_primary" {
+  count                 = var.create_primary_dns_vnet_links && var.enable_primary_private_endpoints ? 1 : 0
+  name                  = "${var.virtual_network_name}-blob-link"
+  resource_group_name   = var.oldhub_dns_zone_resource_group
+  private_dns_zone_name = data.azurerm_private_dns_zone.storage_blob[0].name
+  virtual_network_id    = data.azurerm_virtual_network.main[0].id
+  registration_enabled  = false
+
+  tags = merge(var.tags, {
+    "Purpose" = "Storage-Private-Endpoint-DNS"
+  })
+
+  provider = azurerm.oldhub
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "file_primary" {
+  count                 = var.create_primary_dns_vnet_links && var.enable_primary_private_endpoints ? 1 : 0
+  name                  = "${var.virtual_network_name}-file-link"
+  resource_group_name   = var.oldhub_dns_zone_resource_group
+  private_dns_zone_name = data.azurerm_private_dns_zone.storage_file[0].name
+  virtual_network_id    = data.azurerm_virtual_network.main[0].id
+  registration_enabled  = false
+
+  tags = merge(var.tags, {
+    "Purpose" = "Storage-Private-Endpoint-DNS"
+  })
+
+  provider = azurerm.oldhub
+}

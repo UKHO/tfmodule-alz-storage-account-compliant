@@ -58,6 +58,7 @@ module "storage_account" {
   enable_primary_private_endpoints   = true
   enable_secondary_private_endpoints = false
   account_replication_type           = "ZRS"
+  create_primary_dns_vnet_links      = true  # Set true if VNet not already linked to DNS zones
   
   # NOW SUPPORTED: Use count, for_each, or depends_on
   count = var.create_storage ? 1 : 0

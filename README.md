@@ -36,12 +36,14 @@ All Azure Landing Zone policies are satisfied **natively**:
    - Clean names: `{storage}-blob-pe`, `{storage}-file-pe`
    - DNS zones in oldhub subscription (282900b8-5415-4137-afcc-fd13fe9a64a7)
    - Controlled by: `enable_primary_private_endpoints = true`
+   - **Optional VNet Links**: Set `create_primary_dns_vnet_links = true` to create private DNS zone virtual network links to the spoke VNet
 
 2. **Secondary Endpoints** (hub DNS zones)
    - Suffixed names: `{storage}-blob-pe-hub`, `{storage}-file-pe-hub`
    - DNS zones in hub subscription (f2332963-f81e-4c39-953c-c04510584ba2)
    - Controlled by: `enable_secondary_private_endpoints = true`
    - Purpose: Cross-subscription DNS resolution testing
+   - **Note**: Secondary DNS zones don't require VNet links (assumed already configured)
 
 ### Multi-Subscription Support
 Three provider aliases for flexible DNS zone access:
@@ -155,6 +157,9 @@ module "storage_account" {
   enable_primary_private_endpoints   = true
   enable_secondary_private_endpoints = false
   
+  # Optional: Create VNet links for primary DNS zones (if spoke VNet not already linked)
+  create_primary_dns_vnet_links      = true
+  
   # Now supports count, for_each, and depends_on!
   count = var.create_storage ? 1 : 0
   
@@ -187,16 +192,34 @@ terraform apply
 ```hcl
 enable_primary_private_endpoints   = true
 enable_secondary_private_endpoints = false
+create_primary_dns_vnet_links      = true  # Set to false if VNet already linked
 ```
 
 **Phase 2: Add Secondary for Cross-Sub DNS Testing**
 ```hcl
 enable_primary_private_endpoints   = true
 enable_secondary_private_endpoints = true
+create_primary_dns_vnet_links      = true  # Only for primary DNS zones
 ```
 
 **Phase 3: Choose Final Configuration**
 After testing, keep only the endpoint set you need.
+
+### Private DNS Zone Virtual Network Links
+
+The module can optionally create virtual network links between the spoke VNet and the primary (oldhub) private DNS zones. This is required for DNS resolution to work from the spoke VNet to the private endpoints.
+
+**When to use `create_primary_dns_vnet_links = true`:**
+- First time deploying storage account in a spoke VNet
+- Spoke VNet is **not yet linked** to the oldhub private DNS zones
+- You need automatic DNS resolution for storage private endpoints
+
+**When to use `create_primary_dns_vnet_links = false` (default):**
+- Spoke VNet is **already linked** to the oldhub private DNS zones (e.g., via hub-spoke peering setup)
+- Central networking team manages DNS zone links
+- Want to avoid duplicate VNet link creation
+
+**Note**: Secondary (hub) DNS zones don't need VNet links as they are assumed to be already configured for cross-subscription scenarios.
 
 ## Configuration
 
@@ -216,9 +239,11 @@ hub_dns_zone_resource_group      = "secondary-dns-rg"
 
 ### Optional Customization
 ```hcl
-storage_account_name_prefix      = "mysa"      # Default: "marksa"
-account_replication_type         = "GRS"       # Default: "ZRS"
-blob_delete_retention_days       = 14          # Default: 7
+account_replication_type           = "GRS"     # Default: "ZRS"
+blob_delete_retention_days         = 14        # Default: 7
+enable_primary_private_endpoints   = true      # Default: true
+enable_secondary_private_endpoints = false     # Default: false
+create_primary_dns_vnet_links      = false     # Default: false (set true if VNet not already linked)
 ```
 
 ## Outputs
