@@ -199,6 +199,12 @@ variable "enable_secondary_private_endpoints" {
   default     = false
 }
 
+variable "create_primary_dns_vnet_links" {
+  description = "Create virtual network links for primary (oldhub) private DNS zones to the spoke VNet. Set to false if VNet is already linked to the DNS zones."
+  type        = bool
+  default     = false
+}
+
 # ==============================================================================
 # Tags
 # ==============================================================================

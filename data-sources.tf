@@ -23,6 +23,13 @@ data "azurerm_subnet" "main" {
   resource_group_name  = var.vnet_resource_group_name
 }
 
+# Virtual network for private DNS zone links
+data "azurerm_virtual_network" "main" {
+  count               = var.create_primary_dns_vnet_links ? 1 : 0
+  name                = var.virtual_network_name
+  resource_group_name = var.vnet_resource_group_name
+}
+
 # ==============================================================================
 # Private DNS Zones for Primary (oldhub) subscription
 # ==============================================================================
