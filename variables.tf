@@ -80,43 +80,6 @@ variable "access_tier" {
 }
 
 # ==============================================================================
-# Data Protection Configuration
-# ==============================================================================
-
-variable "blob_delete_retention_days" {
-  description = "Number of days to retain deleted blobs"
-  type        = number
-  default     = 7
-
-  validation {
-    condition     = var.blob_delete_retention_days >= 1 && var.blob_delete_retention_days <= 365
-    error_message = "Blob delete retention days must be between 1 and 365."
-  }
-}
-
-variable "container_delete_retention_days" {
-  description = "Number of days to retain deleted containers"
-  type        = number
-  default     = 7
-
-  validation {
-    condition     = var.container_delete_retention_days >= 1 && var.container_delete_retention_days <= 365
-    error_message = "Container delete retention days must be between 1 and 365."
-  }
-}
-
-variable "blob_restore_days" {
-  description = "Number of days for point-in-time restore capability (must be less than delete retention)"
-  type        = number
-  default     = 6
-
-  validation {
-    condition     = var.blob_restore_days >= 1 && var.blob_restore_days <= 364
-    error_message = "Blob restore days must be between 1 and 364."
-  }
-}
-
-# ==============================================================================
 # Private DNS Zone Configuration - Primary (oldhub)
 # ==============================================================================
 
