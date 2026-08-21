@@ -56,12 +56,12 @@ output "file_secondary_private_endpoint_id" {
 
 output "blob_primary_dns_vnet_link_id" {
   description = "The ID of the primary blob private DNS zone virtual network link"
-  value       = var.create_primary_dns_vnet_links && var.enable_primary_private_endpoints ? azurerm_private_dns_zone_virtual_network_link.blob_primary[0].id : null
+  value       = var.create_secondary_dns_vnet_links && var.enable_primary_private_endpoints ? azurerm_private_dns_zone_virtual_network_link.blob_primary[0].id : null
 }
 
 output "file_primary_dns_vnet_link_id" {
   description = "The ID of the primary file private DNS zone virtual network link"
-  value       = var.create_primary_dns_vnet_links && var.enable_primary_private_endpoints ? azurerm_private_dns_zone_virtual_network_link.file_primary[0].id : null
+  value       = var.create_secondary_dns_vnet_links && var.enable_primary_private_endpoints ? azurerm_private_dns_zone_virtual_network_link.file_primary[0].id : null
 }
 
 # ==============================================================================

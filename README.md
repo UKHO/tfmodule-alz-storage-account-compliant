@@ -36,7 +36,7 @@ All Azure Landing Zone policies are satisfied **natively**:
    - Clean names: `{storage}-blob-pe`, `{storage}-file-pe`
    - DNS zones in oldhub subscription (282900b8-5415-4137-afcc-fd13fe9a64a7)
    - Controlled by: `enable_primary_private_endpoints = true`
-   - **Optional VNet Links**: Set `create_primary_dns_vnet_links = true` to create private DNS zone virtual network links to the spoke VNet
+   - **Optional VNet Links**: Set `create_secondary_dns_vnet_links = true` to create private DNS zone virtual network links to the spoke VNet
 
 2. **Secondary Endpoints** (hub DNS zones)
    - Suffixed names: `{storage}-blob-pe-hub`, `{storage}-file-pe-hub`
@@ -117,7 +117,7 @@ provider "azurerm" {
 provider "azurerm" {
   alias                      = "oldhub"
   features {}
-  subscription_id            = var.oldhub_subscription_id
+  subscription_id            = var.secondary_subscription_id
   skip_provider_registration = true
 }
 
@@ -125,7 +125,7 @@ provider "azurerm" {
 provider "azurerm" {
   alias                      = "hub"
   features {}
-  subscription_id            = var.hub_subscription_id
+  subscription_id            = var.primary_subscription_id
   skip_provider_registration = true
 }
 ```
@@ -139,8 +139,8 @@ module "storage_account" {
   # Pass provider configurations
   providers = {
     azurerm        = azurerm
-    azurerm.oldhub = azurerm.oldhub
-    azurerm.hub    = azurerm.hub
+    azurerm.secondary = azurerm.secondary
+    azurerm.primary    = azurerm.primary
   }
   
   # Required variables
@@ -150,15 +150,15 @@ module "storage_account" {
   virtual_network_name           = "your-vnet"
   subnet_name                    = "pe-subnet"
   vnet_resource_group_name       = "vnet-rg"
-  oldhub_dns_zone_resource_group = "primary-dns-rg"
-  hub_dns_zone_resource_group    = "secondary-dns-rg"
+  secondary_dns_zone_resource_group = "primary-dns-rg"
+  primary_dns_zone_resource_group    = "secondary-dns-rg"
   
   # Optional: Enable/disable private endpoints
   enable_primary_private_endpoints   = true
   enable_secondary_private_endpoints = false
   
   # Optional: Create VNet links for primary DNS zones (if spoke VNet not already linked)
-  create_primary_dns_vnet_links      = true
+  create_secondary_dns_vnet_links      = true
   
   # Now supports count, for_each, and depends_on!
   count = var.create_storage ? 1 : 0
@@ -192,14 +192,14 @@ terraform apply
 ```hcl
 enable_primary_private_endpoints   = true
 enable_secondary_private_endpoints = false
-create_primary_dns_vnet_links      = true  # Set to false if VNet already linked
+create_secondary_dns_vnet_links      = true  # Set to false if VNet already linked
 ```
 
 **Phase 2: Add Secondary for Cross-Sub DNS Testing**
 ```hcl
 enable_primary_private_endpoints   = true
 enable_secondary_private_endpoints = true
-create_primary_dns_vnet_links      = true  # Only for primary DNS zones
+create_secondary_dns_vnet_links      = true  # Only for primary DNS zones
 ```
 
 **Phase 3: Choose Final Configuration**
@@ -209,12 +209,12 @@ After testing, keep only the endpoint set you need.
 
 The module can optionally create virtual network links between the spoke VNet and the primary (oldhub) private DNS zones. This is required for DNS resolution to work from the spoke VNet to the private endpoints.
 
-**When to use `create_primary_dns_vnet_links = true`:**
+**When to use `create_secondary_dns_vnet_links = true`:**
 - First time deploying storage account in a spoke VNet
 - Spoke VNet is **not yet linked** to the oldhub private DNS zones
 - You need automatic DNS resolution for storage private endpoints
 
-**When to use `create_primary_dns_vnet_links = false` (default):**
+**When to use `create_secondary_dns_vnet_links = false` (default):**
 - Spoke VNet is **already linked** to the oldhub private DNS zones (e.g., via hub-spoke peering setup)
 - Central networking team manages DNS zone links
 - Want to avoid duplicate VNet link creation
@@ -231,8 +231,8 @@ key_vault_name                   = "your-keyvault"
 virtual_network_name             = "your-vnet"
 subnet_name                      = "pe-subnet"
 vnet_resource_group_name         = "vnet-rg"
-oldhub_dns_zone_resource_group   = "primary-dns-rg"
-hub_dns_zone_resource_group      = "secondary-dns-rg"
+secondary_dns_zone_resource_group   = "primary-dns-rg"
+primary_dns_zone_resource_group      = "secondary-dns-rg"
 ```
 
 **Note**: Subscription IDs are now configured via provider blocks in the calling module, not as variables.
@@ -243,7 +243,7 @@ account_replication_type           = "GRS"     # Default: "ZRS"
 blob_delete_retention_days         = 14        # Default: 7
 enable_primary_private_endpoints   = true      # Default: true
 enable_secondary_private_endpoints = false     # Default: false
-create_primary_dns_vnet_links      = false     # Default: false (set true if VNet not already linked)
+create_secondary_dns_vnet_links      = false     # Default: false (set true if VNet not already linked)
 ```
 
 ## Outputs
