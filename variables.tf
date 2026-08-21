@@ -80,7 +80,7 @@ variable "access_tier" {
 }
 
 # ==============================================================================
-# Private DNS Zone Configuration - Primary (oldhub)
+# Private DNS Zone Configuration - Secondary (oldhub)
 # ==============================================================================
 
 variable "secondary_dns_zone_resource_group" {
@@ -89,7 +89,7 @@ variable "secondary_dns_zone_resource_group" {
 }
 
 # ==============================================================================
-# Private DNS Zone Configuration - Secondary (hub)
+# Private DNS Zone Configuration - Primary (hub)
 # ==============================================================================
 
 variable "primary_dns_zone_resource_group" {
@@ -162,8 +162,8 @@ variable "enable_secondary_private_endpoints" {
   default     = false
 }
 
-variable "create_primary_dns_vnet_links" {
-  description = "Create virtual network links for primary (oldhub) private DNS zones to the spoke VNet. Set to false if VNet is already linked to the DNS zones."
+variable "create_secondary_dns_vnet_links" {
+  description = "Create virtual network links for secondary (oldhub) private DNS zones to the spoke VNet. Set to false if VNet is already linked to the DNS zones."
   type        = bool
   default     = false
 }

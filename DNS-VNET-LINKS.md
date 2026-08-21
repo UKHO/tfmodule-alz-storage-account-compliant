@@ -7,7 +7,7 @@ Added optional support for creating private DNS zone virtual network links for p
 
 ### New Variable
 ```hcl
-variable "create_primary_dns_vnet_links" {
+variable "create_secondary_dns_vnet_links" {
   description = "Create virtual network links for primary (oldhub) private DNS zones to the spoke VNet. Set to false if VNet is already linked to the DNS zones."
   type        = bool
   default     = false
@@ -15,7 +15,7 @@ variable "create_primary_dns_vnet_links" {
 ```
 
 ### Resources Created
-When `create_primary_dns_vnet_links = true` and `enable_primary_private_endpoints = true`:
+When `create_secondary_dns_vnet_links = true` and `enable_primary_private_endpoints = true`:
 
 1. **Blob DNS Zone VNet Link**
    - Name: `{vnet-name}-blob-link`
@@ -62,14 +62,14 @@ When `create_primary_dns_vnet_links = true` and `enable_primary_private_endpoint
 
 ## When to Use This Feature
 
-### ✅ Use `create_primary_dns_vnet_links = true` When:
+### ✅ Use `create_secondary_dns_vnet_links = true` When:
 
 1. **First-time deployment** in a spoke VNet that has never had private endpoints
 2. **New spoke VNet** that hasn't been linked to the oldhub DNS zones
 3. **Isolated spoke** where DNS zones are not centrally managed
 4. **Testing scenarios** where you want the module to handle all DNS configuration
 
-### ❌ Use `create_primary_dns_vnet_links = false` (default) When:
+### ❌ Use `create_secondary_dns_vnet_links = false` (default) When:
 
 1. **VNet already linked** to oldhub DNS zones (most common in hub-spoke architectures)
 2. **Central networking team** manages all DNS zone links
@@ -100,7 +100,7 @@ module "storage_account" {
   
   # Create VNet links for first storage account
   enable_primary_private_endpoints = true
-  create_primary_dns_vnet_links    = true  # ✅ VNet not yet linked
+  create_secondary_dns_vnet_links    = true  # ✅ VNet not yet linked
 }
 ```
 
@@ -126,7 +126,7 @@ module "storage_account_2" {
   
   # Don't create VNet links again
   enable_primary_private_endpoints = true
-  create_primary_dns_vnet_links    = false  # ✅ VNet already linked by first storage account
+  create_secondary_dns_vnet_links    = false  # ✅ VNet already linked by first storage account
 }
 ```
 
@@ -153,7 +153,7 @@ module "storage_account" {
   
   # Use existing VNet links managed by networking team
   enable_primary_private_endpoints = true
-  create_primary_dns_vnet_links    = false  # ✅ Default - VNet already linked centrally
+  create_secondary_dns_vnet_links    = false  # ✅ Default - VNet already linked centrally
 }
 ```
 
@@ -193,7 +193,7 @@ module "storage_account" {
   
   storage_account_name            = each.key
   virtual_network_name            = each.value.vnet_name
-  create_primary_dns_vnet_links   = each.value.create_vnet_links
+  create_secondary_dns_vnet_links   = each.value.create_vnet_links
   
   # ... other variables
 }
@@ -220,7 +220,7 @@ output "file_primary_dns_vnet_link_id" {
 ## Important Notes
 
 ### 1. Secondary DNS Zones Don't Need Links
-The `create_primary_dns_vnet_links` variable **only affects primary (oldhub) DNS zones**. Secondary (hub) DNS zones are assumed to already have VNet links configured, as they are typically used for cross-subscription testing and are centrally managed.
+The `create_secondary_dns_vnet_links` variable **only affects primary (oldhub) DNS zones**. Secondary (hub) DNS zones are assumed to already have VNet links configured, as they are typically used for cross-subscription testing and are centrally managed.
 
 ### 2. VNet Link Names
 VNet links are named: `{vnet-name}-{service}-link`
@@ -247,14 +247,14 @@ Virtual network links are created with `registration_enabled = false`, meaning:
 
 **Cause**: VNet is already linked to the DNS zone (possibly by another process or module)
 
-**Solution**: Set `create_primary_dns_vnet_links = false`
+**Solution**: Set `create_secondary_dns_vnet_links = false`
 
 ### Private Endpoint DNS Not Resolving
 
 **Symptoms**: Cannot reach storage account via private endpoint, DNS returns public IP
 
 **Solutions**:
-1. Check if VNet is linked to DNS zone: Set `create_primary_dns_vnet_links = true`
+1. Check if VNet is linked to DNS zone: Set `create_secondary_dns_vnet_links = true`
 2. Verify private endpoint is created: Check `enable_primary_private_endpoints = true`
 3. Ensure DNS zone contains A record for the storage account
 4. Test with `nslookup {storage-account}.blob.core.windows.net` from VM in spoke VNet
@@ -277,11 +277,11 @@ az network private-dns link vnet list \
   --output table
 ```
 
-If your VNet is already in the list, set `create_primary_dns_vnet_links = false`.
+If your VNet is already in the list, set `create_secondary_dns_vnet_links = false`.
 
 ## Best Practices
 
-1. **Default to false**: Leave `create_primary_dns_vnet_links = false` unless you know the VNet needs linking
+1. **Default to false**: Leave `create_secondary_dns_vnet_links = false` unless you know the VNet needs linking
 2. **One link per VNet**: Only create VNet links once per VNet (first storage account)
 3. **Central management**: Prefer having networking team manage VNet links centrally
 4. **Document decision**: Tag storage accounts to indicate whether they created VNet links
@@ -301,4 +301,4 @@ terraform import 'module.storage_account.azurerm_private_dns_zone_virtual_networ
   /subscriptions/{oldhub-sub-id}/resourceGroups/{dns-rg}/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net/virtualNetworkLinks/{link-name}
 ```
 
-After importing, set `create_primary_dns_vnet_links = true` in your module call.
+After importing, set `create_secondary_dns_vnet_links = true` in your module call.

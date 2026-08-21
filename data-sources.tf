@@ -25,7 +25,7 @@ data "azurerm_subnet" "main" {
 
 # Virtual network for private DNS zone links
 data "azurerm_virtual_network" "main" {
-  count               = var.create_primary_dns_vnet_links ? 1 : 0
+  count               = var.create_secondary_dns_vnet_links ? 1 : 0
   name                = var.virtual_network_name
   resource_group_name = var.vnet_resource_group_name
 }
