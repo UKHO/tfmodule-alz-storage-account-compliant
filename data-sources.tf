@@ -31,37 +31,37 @@ data "azurerm_virtual_network" "main" {
 }
 
 # ==============================================================================
-# Private DNS Zones for Primary (oldhub) subscription
+# Private DNS Zones for Secondary (oldhub) subscription
 # ==============================================================================
 
 data "azurerm_private_dns_zone" "storage_blob" {
   count               = var.enable_primary_private_endpoints ? 1 : 0
   name                = "privatelink.blob.core.windows.net"
-  resource_group_name = var.oldhub_dns_zone_resource_group
-  provider            = azurerm.oldhub
+  resource_group_name = var.secondary_dns_zone_resource_group
+  provider            = azurerm.secondary
 }
 
 data "azurerm_private_dns_zone" "storage_file" {
   count               = var.enable_primary_private_endpoints ? 1 : 0
   name                = "privatelink.file.core.windows.net"
-  resource_group_name = var.oldhub_dns_zone_resource_group
-  provider            = azurerm.oldhub
+  resource_group_name = var.secondary_dns_zone_resource_group
+  provider            = azurerm.secondary
 }
 
 # ==============================================================================
-# Private DNS Zones for Secondary (hub) subscription  
+# Private DNS Zones for Primary (hub) subscription  
 # ==============================================================================
 
-data "azurerm_private_dns_zone" "storage_blob_hub" {
+data "azurerm_private_dns_zone" "storage_blob_primary" {
   count               = var.enable_secondary_private_endpoints ? 1 : 0
   name                = "privatelink.blob.core.windows.net"
-  resource_group_name = var.hub_dns_zone_resource_group
-  provider            = azurerm.hub
+  resource_group_name = var.primary_dns_zone_resource_group
+  provider            = azurerm.primary
 }
 
-data "azurerm_private_dns_zone" "storage_file_hub" {
+data "azurerm_private_dns_zone" "storage_file_primary" {
   count               = var.enable_secondary_private_endpoints ? 1 : 0
   name                = "privatelink.file.core.windows.net"
-  resource_group_name = var.hub_dns_zone_resource_group
-  provider            = azurerm.hub
+  resource_group_name = var.primary_dns_zone_resource_group
+  provider            = azurerm.primary
 }

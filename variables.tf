@@ -83,7 +83,7 @@ variable "access_tier" {
 # Private DNS Zone Configuration - Primary (oldhub)
 # ==============================================================================
 
-variable "oldhub_dns_zone_resource_group" {
+variable "secondary_dns_zone_resource_group" {
   description = "Resource group name containing the oldhub private DNS zones"
   type        = string
 }
@@ -92,7 +92,7 @@ variable "oldhub_dns_zone_resource_group" {
 # Private DNS Zone Configuration - Secondary (hub)
 # ==============================================================================
 
-variable "hub_dns_zone_resource_group" {
+variable "primary_dns_zone_resource_group" {
   description = "Resource group name containing the hub private DNS zones"
   type        = string
 }

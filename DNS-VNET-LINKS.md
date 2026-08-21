@@ -20,12 +20,12 @@ When `create_primary_dns_vnet_links = true` and `enable_primary_private_endpoint
 1. **Blob DNS Zone VNet Link**
    - Name: `{vnet-name}-blob-link`
    - Links spoke VNet to `privatelink.blob.core.windows.net` in oldhub
-   - Provider: `azurerm.oldhub`
+   - Provider: `azurerm.secondary`
 
 2. **File DNS Zone VNet Link**
    - Name: `{vnet-name}-file-link`
    - Links spoke VNet to `privatelink.file.core.windows.net` in oldhub
-   - Provider: `azurerm.oldhub`
+   - Provider: `azurerm.secondary`
 
 ### Architecture
 
@@ -85,8 +85,8 @@ module "storage_account" {
   
   providers = {
     azurerm        = azurerm
-    azurerm.oldhub = azurerm.oldhub
-    azurerm.hub    = azurerm.hub
+    azurerm.secondary = azurerm.secondary
+    azurerm.primary    = azurerm.primary
   }
   
   resource_group_name            = "rg-spoke-app"
@@ -95,8 +95,8 @@ module "storage_account" {
   virtual_network_name           = "vnet-spoke-001"
   subnet_name                    = "snet-pe"
   vnet_resource_group_name       = "rg-spoke-network"
-  oldhub_dns_zone_resource_group = "rg-dns-oldhub"
-  hub_dns_zone_resource_group    = "rg-dns-hub"
+  secondary_dns_zone_resource_group = "rg-dns-oldhub"
+  primary_dns_zone_resource_group    = "rg-dns-hub"
   
   # Create VNet links for first storage account
   enable_primary_private_endpoints = true
@@ -111,8 +111,8 @@ module "storage_account_2" {
   
   providers = {
     azurerm        = azurerm
-    azurerm.oldhub = azurerm.oldhub
-    azurerm.hub    = azurerm.hub
+    azurerm.secondary = azurerm.secondary
+    azurerm.primary    = azurerm.primary
   }
   
   resource_group_name            = "rg-spoke-app"
@@ -121,8 +121,8 @@ module "storage_account_2" {
   virtual_network_name           = "vnet-spoke-001"  # Same VNet
   subnet_name                    = "snet-pe"
   vnet_resource_group_name       = "rg-spoke-network"
-  oldhub_dns_zone_resource_group = "rg-dns-oldhub"
-  hub_dns_zone_resource_group    = "rg-dns-hub"
+  secondary_dns_zone_resource_group = "rg-dns-oldhub"
+  primary_dns_zone_resource_group    = "rg-dns-hub"
   
   # Don't create VNet links again
   enable_primary_private_endpoints = true
@@ -138,8 +138,8 @@ module "storage_account" {
   
   providers = {
     azurerm        = azurerm
-    azurerm.oldhub = azurerm.oldhub
-    azurerm.hub    = azurerm.hub
+    azurerm.secondary = azurerm.secondary
+    azurerm.primary    = azurerm.primary
   }
   
   resource_group_name            = "rg-spoke-app"
@@ -148,8 +148,8 @@ module "storage_account" {
   virtual_network_name           = "vnet-spoke-managed"
   subnet_name                    = "snet-pe"
   vnet_resource_group_name       = "rg-spoke-network"
-  oldhub_dns_zone_resource_group = "rg-dns-oldhub"
-  hub_dns_zone_resource_group    = "rg-dns-hub"
+  secondary_dns_zone_resource_group = "rg-dns-oldhub"
+  primary_dns_zone_resource_group    = "rg-dns-hub"
   
   # Use existing VNet links managed by networking team
   enable_primary_private_endpoints = true
@@ -187,8 +187,8 @@ module "storage_account" {
   
   providers = {
     azurerm        = azurerm
-    azurerm.oldhub = azurerm.oldhub
-    azurerm.hub    = azurerm.hub
+    azurerm.secondary = azurerm.secondary
+    azurerm.primary    = azurerm.primary
   }
   
   storage_account_name            = each.key
@@ -233,7 +233,7 @@ This naming ensures:
 - ✅ Won't conflict with existing links
 
 ### 3. Provider Context
-VNet links are created in the **oldhub subscription** using the `azurerm.oldhub` provider, as that's where the primary private DNS zones are located. The VNet itself remains in the spoke subscription.
+VNet links are created in the **oldhub subscription** using the `azurerm.secondary` provider, as that's where the primary private DNS zones are located. The VNet itself remains in the spoke subscription.
 
 ### 4. Registration Disabled
 Virtual network links are created with `registration_enabled = false`, meaning:

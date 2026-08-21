@@ -9,7 +9,7 @@ terraform {
     azurerm = {
       source                = "hashicorp/azurerm"
       version               = ">= 5.0.0"
-      configuration_aliases = [azurerm.hub, azurerm.oldhub]
+      configuration_aliases = [azurerm.primary, azurerm.secondary]
     }
     azapi = {
       source  = "Azure/azapi"

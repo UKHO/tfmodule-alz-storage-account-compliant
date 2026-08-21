@@ -40,8 +40,8 @@ module "storage_account" {
   # REQUIRED: Pass provider configurations
   providers = {
     azurerm        = azurerm
-    azurerm.oldhub = azurerm.oldhub
-    azurerm.hub    = azurerm.hub
+    azurerm.secondary = azurerm.secondary
+    azurerm.primary    = azurerm.primary
   }
   
   # Required variables
@@ -51,8 +51,8 @@ module "storage_account" {
   virtual_network_name           = "vnet-prod"
   subnet_name                    = "snet-privateendpoints"
   vnet_resource_group_name       = "rg-network-prod"
-  oldhub_dns_zone_resource_group = "rg-dns-oldhub"
-  hub_dns_zone_resource_group    = "rg-dns-hub"
+  secondary_dns_zone_resource_group = "rg-dns-oldhub"
+  primary_dns_zone_resource_group    = "rg-dns-hub"
   
   # Optional variables
   enable_primary_private_endpoints   = true
@@ -100,8 +100,8 @@ module "storage_account" {
   
   providers = {
     azurerm        = azurerm
-    azurerm.oldhub = azurerm.oldhub
-    azurerm.hub    = azurerm.hub
+    azurerm.secondary = azurerm.secondary
+    azurerm.primary    = azurerm.primary
   }
   
   storage_account_name         = each.key
@@ -111,8 +111,8 @@ module "storage_account" {
   virtual_network_name         = "vnet-shared"
   subnet_name                  = "snet-privateendpoints"
   vnet_resource_group_name     = "rg-network"
-  oldhub_dns_zone_resource_group = "rg-dns-oldhub"
-  hub_dns_zone_resource_group    = "rg-dns-hub"
+  secondary_dns_zone_resource_group = "rg-dns-oldhub"
+  primary_dns_zone_resource_group    = "rg-dns-hub"
 }
 ```
 
@@ -122,8 +122,8 @@ module "storage_account" {
 ```hcl
 # These variables have been REMOVED:
 subscription_id            = "..."
-hub_subscription_id        = "..."
-oldhub_subscription_id     = "..."
+primary_subscription_id        = "..."
+secondary_subscription_id     = "..."
 ```
 
 ### ✅ NOW REQUIRED
@@ -131,8 +131,8 @@ oldhub_subscription_id     = "..."
 # Provider block must be passed:
 providers = {
   azurerm        = azurerm
-  azurerm.oldhub = azurerm.oldhub
-  azurerm.hub    = azurerm.hub
+  azurerm.secondary = azurerm.secondary
+  azurerm.primary    = azurerm.primary
 }
 ```
 

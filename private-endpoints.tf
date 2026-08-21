@@ -74,7 +74,7 @@ resource "azurerm_private_endpoint" "blob_secondary" {
 
   private_dns_zone_group {
     name                 = "default"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.storage_blob_hub[0].id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.storage_blob_primary[0].id]
   }
 
   tags = merge(var.tags, {
@@ -100,7 +100,7 @@ resource "azurerm_private_endpoint" "file_secondary" {
 
   private_dns_zone_group {
     name                 = "default"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.storage_file_hub[0].id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.storage_file_primary[0].id]
   }
 
   tags = merge(var.tags, {
@@ -125,7 +125,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blob_primary" {
     "Purpose" = "Storage-Private-Endpoint-DNS"
   })
 
-  provider = azurerm.oldhub
+  provider = azurerm.secondary
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "file_primary" {
@@ -139,5 +139,5 @@ resource "azurerm_private_dns_zone_virtual_network_link" "file_primary" {
     "Purpose" = "Storage-Private-Endpoint-DNS"
   })
 
-  provider = azurerm.oldhub
+  provider = azurerm.secondary
 }

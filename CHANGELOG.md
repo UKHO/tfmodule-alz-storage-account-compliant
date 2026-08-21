@@ -28,8 +28,8 @@ The module contained provider configuration blocks in `versions.tf`, which Terra
 
 **Variables Removed**:
 - `subscription_id` - No longer needed (configured in calling module's provider)
-- `hub_subscription_id` - No longer needed (configured in calling module's provider)
-- `oldhub_subscription_id` - No longer needed (configured in calling module's provider)
+- `primary_subscription_id` - No longer needed (configured in calling module's provider)
+- `secondary_subscription_id` - No longer needed (configured in calling module's provider)
 
 **Why**: These variables were only used for provider configuration, which is now handled by the calling module.
 
@@ -89,8 +89,8 @@ module "storage_account" {
   source = "..."
   providers = {
     azurerm        = azurerm
-    azurerm.oldhub = azurerm.oldhub
-    azurerm.hub    = azurerm.hub
+    azurerm.secondary = azurerm.secondary
+    azurerm.primary    = azurerm.primary
   }
   # ... other variables (NO subscription_id!)
 }
@@ -101,8 +101,8 @@ module "storage_account" {
 
 **Variables That No Longer Exist**:
 - `subscription_id`
-- `hub_subscription_id`
-- `oldhub_subscription_id`
+- `primary_subscription_id`
+- `secondary_subscription_id`
 
 **Migration**: Move these values to provider blocks in calling module
 
@@ -120,13 +120,13 @@ provider "azurerm" {
 provider "azurerm" {
   alias           = "oldhub"
   features {}
-  subscription_id = var.oldhub_subscription_id
+  subscription_id = var.secondary_subscription_id
 }
 
 provider "azurerm" {
   alias           = "hub"
   features {}
-  subscription_id = var.hub_subscription_id
+  subscription_id = var.primary_subscription_id
 }
 ```
 

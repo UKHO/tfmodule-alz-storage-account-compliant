@@ -117,7 +117,7 @@ provider "azurerm" {
 provider "azurerm" {
   alias                      = "oldhub"
   features {}
-  subscription_id            = var.oldhub_subscription_id
+  subscription_id            = var.secondary_subscription_id
   skip_provider_registration = true
 }
 
@@ -125,7 +125,7 @@ provider "azurerm" {
 provider "azurerm" {
   alias                      = "hub"
   features {}
-  subscription_id            = var.hub_subscription_id
+  subscription_id            = var.primary_subscription_id
   skip_provider_registration = true
 }
 ```
@@ -139,8 +139,8 @@ module "storage_account" {
   # Pass provider configurations
   providers = {
     azurerm        = azurerm
-    azurerm.oldhub = azurerm.oldhub
-    azurerm.hub    = azurerm.hub
+    azurerm.secondary = azurerm.secondary
+    azurerm.primary    = azurerm.primary
   }
   
   # Required variables
@@ -150,8 +150,8 @@ module "storage_account" {
   virtual_network_name           = "your-vnet"
   subnet_name                    = "pe-subnet"
   vnet_resource_group_name       = "vnet-rg"
-  oldhub_dns_zone_resource_group = "primary-dns-rg"
-  hub_dns_zone_resource_group    = "secondary-dns-rg"
+  secondary_dns_zone_resource_group = "primary-dns-rg"
+  primary_dns_zone_resource_group    = "secondary-dns-rg"
   
   # Optional: Enable/disable private endpoints
   enable_primary_private_endpoints   = true
@@ -231,8 +231,8 @@ key_vault_name                   = "your-keyvault"
 virtual_network_name             = "your-vnet"
 subnet_name                      = "pe-subnet"
 vnet_resource_group_name         = "vnet-rg"
-oldhub_dns_zone_resource_group   = "primary-dns-rg"
-hub_dns_zone_resource_group      = "secondary-dns-rg"
+secondary_dns_zone_resource_group   = "primary-dns-rg"
+primary_dns_zone_resource_group      = "secondary-dns-rg"
 ```
 
 **Note**: Subscription IDs are now configured via provider blocks in the calling module, not as variables.

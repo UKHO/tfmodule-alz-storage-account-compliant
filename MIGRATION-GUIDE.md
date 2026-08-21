@@ -16,12 +16,12 @@ provider "azurerm" {
 
 provider "azurerm" {
   alias = "hub"
-  subscription_id = var.hub_subscription_id
+  subscription_id = var.primary_subscription_id
 }
 
 provider "azurerm" {
   alias = "oldhub"
-  subscription_id = var.oldhub_subscription_id
+  subscription_id = var.secondary_subscription_id
 }
 ```
 
@@ -33,7 +33,7 @@ terraform {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = ">= 3.70"
-      configuration_aliases = [azurerm.hub, azurerm.oldhub]
+      configuration_aliases = [azurerm.primary, azurerm.secondary]
     }
   }
 }
@@ -42,8 +42,8 @@ terraform {
 ### 2. Variables Removed
 The following variables have been **removed** as they're no longer needed:
 - `subscription_id`
-- `hub_subscription_id`
-- `oldhub_subscription_id`
+- `primary_subscription_id`
+- `secondary_subscription_id`
 
 These are now configured in the provider blocks in your calling module.
 
@@ -78,14 +78,14 @@ provider "azurerm" {
 provider "azurerm" {
   alias                      = "oldhub"
   features {}
-  subscription_id            = var.oldhub_subscription_id  # Your variable
+  subscription_id            = var.secondary_subscription_id  # Your variable
   skip_provider_registration = true
 }
 
 provider "azurerm" {
   alias                      = "hub"
   features {}
-  subscription_id            = var.hub_subscription_id  # Your variable
+  subscription_id            = var.primary_subscription_id  # Your variable
   skip_provider_registration = true
 }
 ```
@@ -101,8 +101,8 @@ module "storage_account" {
   
   # These variables no longer exist!
   subscription_id            = var.subscription_id
-  hub_subscription_id        = var.hub_subscription_id
-  oldhub_subscription_id     = var.oldhub_subscription_id
+  primary_subscription_id        = var.primary_subscription_id
+  secondary_subscription_id     = var.secondary_subscription_id
   
   resource_group_name        = "your-rg"
   # ... other variables
@@ -117,8 +117,8 @@ module "storage_account" {
   # Pass provider configurations
   providers = {
     azurerm        = azurerm
-    azurerm.oldhub = azurerm.oldhub
-    azurerm.hub    = azurerm.hub
+    azurerm.secondary = azurerm.secondary
+    azurerm.primary    = azurerm.primary
   }
   
   resource_group_name        = "your-rg"
@@ -209,8 +209,8 @@ module "storage_account" {
   
   providers = {
     azurerm        = azurerm
-    azurerm.oldhub = azurerm.oldhub
-    azurerm.hub    = azurerm.hub
+    azurerm.secondary = azurerm.secondary
+    azurerm.primary    = azurerm.primary
   }
   
   resource_group_name  = "rg-storage-${each.key}"
@@ -235,8 +235,8 @@ module "storage_account" {
 ```hcl
 providers = {
   azurerm        = azurerm
-  azurerm.oldhub = azurerm.oldhub
-  azurerm.hub    = azurerm.hub
+  azurerm.secondary = azurerm.secondary
+  azurerm.primary    = azurerm.primary
 }
 ```
 
