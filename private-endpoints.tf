@@ -117,7 +117,8 @@ resource "azurerm_private_endpoint" "file_secondary" {
 resource "azurerm_private_dns_zone_virtual_network_link" "blob_primary" {
   count                 = var.create_secondary_dns_vnet_links && var.enable_primary_private_endpoints ? 1 : 0
   name                  = "${var.virtual_network_name}-blob-link"
-  private_dns_zone_id   = data.azurerm_private_dns_zone.storage_blob[0].id
+  resource_group_name   = var.secondary_dns_zone_resource_group
+  private_dns_zone_name = data.azurerm_private_dns_zone.storage_blob[0].name
   virtual_network_id    = data.azurerm_virtual_network.main[0].id
   registration_enabled  = false
 
@@ -131,7 +132,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blob_primary" {
 resource "azurerm_private_dns_zone_virtual_network_link" "file_primary" {
   count                 = var.create_secondary_dns_vnet_links && var.enable_primary_private_endpoints ? 1 : 0
   name                  = "${var.virtual_network_name}-file-link"
-  private_dns_zone_id = data.azurerm_private_dns_zone.storage_file[0].id
+  resource_group_name   = var.secondary_dns_zone_resource_group
+  private_dns_zone_name = data.azurerm_private_dns_zone.storage_file[0].name
   virtual_network_id    = data.azurerm_virtual_network.main[0].id
   registration_enabled  = false
 
