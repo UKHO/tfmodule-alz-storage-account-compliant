@@ -30,26 +30,30 @@ All Azure Landing Zone policies are satisfied **natively**:
 - ✅ Point-in-time restore
 
 ### Private Endpoints
-**Dual Endpoint Strategy** for cross-subscription DNS resolution:
+**Cross-Subscription DNS Strategy**:
+
+Only the primary endpoint set is created in the target resource group and configured VNet subnet. When enabled, the secondary option creates matching A records in the hub DNS zones that point to the primary endpoints' private IPs; it does not create another endpoint.
 
 1. **Primary Endpoints** (oldhub DNS zones)
    - Clean names: `{storage}-blob-pe`, `{storage}-file-pe`
    - DNS zones in oldhub subscription (282900b8-5415-4137-afcc-fd13fe9a64a7)
+    - Uses the module provider alias `azurerm.secondary`
    - Controlled by: `enable_primary_private_endpoints = true`
    - **Optional VNet Links**: Set `create_secondary_dns_vnet_links = true` to create private DNS zone virtual network links to the spoke VNet
 
-2. **Secondary Endpoints** (hub DNS zones)
-   - Suffixed names: `{storage}-blob-pe-hub`, `{storage}-file-pe-hub`
+2. **Secondary DNS Records** (hub DNS zones)
+    - Blob and file A records use the storage account name
    - DNS zones in hub subscription (f2332963-f81e-4c39-953c-c04510584ba2)
-   - Controlled by: `enable_secondary_private_endpoints = true`
-   - Purpose: Cross-subscription DNS resolution testing
-   - **Note**: Secondary DNS zones don't require VNet links (assumed already configured)
+    - Uses the module provider alias `azurerm.primary`
+    - Controlled by: `enable_secondary_private_endpoints = true` (legacy variable name)
+    - Each record uses the corresponding primary endpoint IP; no additional private endpoint is created
+    - **Note**: Hub DNS zones are assumed to be linked to the VNets that need to resolve them
 
 ### Multi-Subscription Support
-Three provider aliases for flexible DNS zone access:
-- `default` - Storage account deployment subscription
-- `oldhub` - Primary DNS zones
-- `hub` - Secondary DNS zones
+The module accepts three provider configurations:
+- `azurerm` (default) - Target subscription for the storage account and private endpoints
+- `azurerm.primary` - Hub subscription, used for secondary DNS records
+- `azurerm.secondary` - oldhub subscription, used for primary endpoint DNS zones and their optional VNet links
 
 ## Code Organization
 
@@ -87,10 +91,7 @@ Each file has a single responsibility, making it easy to locate and modify speci
 ### Prerequisites
 - Azure CLI authenticated
 - Terraform >= 1.5
-- Access to three subscriptions:
-  - Target subscription (storage account)
-  - oldhub subscription (primary DNS zones)
-  - hub subscription (secondary DNS zones)
+- Access to the target subscription (storage account and primary private endpoints), the oldhub subscription (primary endpoint DNS zones), and the hub subscription (secondary DNS records)
 
 ### Provider Configuration
 
@@ -113,19 +114,19 @@ provider "azurerm" {
   skip_provider_registration = true
 }
 
-# Configure the oldhub provider for primary DNS zones
+# Configure the hub provider for secondary DNS records
 provider "azurerm" {
-  alias                      = "oldhub"
+  alias                      = "primary"
   features {}
-  subscription_id            = var.secondary_subscription_id
+  subscription_id            = var.primary_subscription_id
   skip_provider_registration = true
 }
 
-# Configure the hub provider for secondary DNS zones
+# Configure the oldhub provider for primary endpoint DNS zones
 provider "azurerm" {
-  alias                      = "hub"
+  alias                      = "secondary"
   features {}
-  subscription_id            = var.primary_subscription_id
+  subscription_id            = var.secondary_subscription_id
   skip_provider_registration = true
 }
 ```
@@ -150,10 +151,10 @@ module "storage_account" {
   virtual_network_name           = "your-vnet"
   subnet_name                    = "pe-subnet"
   vnet_resource_group_name       = "vnet-rg"
-  secondary_dns_zone_resource_group = "primary-dns-rg"
-  primary_dns_zone_resource_group    = "secondary-dns-rg"
+  secondary_dns_zone_resource_group = "oldhub-dns-rg"
+  primary_dns_zone_resource_group   = "hub-dns-rg"
   
-  # Optional: Enable/disable private endpoints
+  # Optional: Enable primary private endpoints and mirror their IPs into hub DNS
   enable_primary_private_endpoints   = true
   enable_secondary_private_endpoints = false
   
@@ -181,7 +182,7 @@ terraform plan
 # Deploy with primary endpoints only
 terraform apply
 
-# Optional: Enable secondary endpoints for testing
+# Optional: Add records in hub DNS zones that point to the primary endpoints
 # Edit terraform.tfvars: enable_secondary_private_endpoints = true
 terraform apply
 ```
@@ -195,15 +196,16 @@ enable_secondary_private_endpoints = false
 create_secondary_dns_vnet_links      = true  # Set to false if VNet already linked
 ```
 
-**Phase 2: Add Secondary for Cross-Sub DNS Testing**
+**Phase 2: Mirror the Primary Endpoint IPs into Hub DNS**
 ```hcl
 enable_primary_private_endpoints   = true
 enable_secondary_private_endpoints = true
-create_secondary_dns_vnet_links      = true  # Only for primary DNS zones
+create_secondary_dns_vnet_links    = true  # Only for oldhub DNS zones
 ```
 
-**Phase 3: Choose Final Configuration**
-After testing, keep only the endpoint set you need.
+The hub blob and file A records point to the primary endpoints' IPs. The primary endpoints must remain enabled.
+
+**Migrating an existing deployment:** First set `enable_secondary_private_endpoints = false` and apply to remove the old hub-side private endpoints and their DNS zone groups. Then set it to `true` and apply again to create Terraform-managed A records. This avoids competing ownership of the same DNS record set during migration.
 
 ### Private DNS Zone Virtual Network Links
 
@@ -219,7 +221,7 @@ The module can optionally create virtual network links between the spoke VNet an
 - Central networking team manages DNS zone links
 - Want to avoid duplicate VNet link creation
 
-**Note**: Secondary (hub) DNS zones don't need VNet links as they are assumed to be already configured for cross-subscription scenarios.
+**Note**: Hub DNS zones are assumed to be linked to the VNets that need to resolve the mirrored records.
 
 ## Configuration
 
@@ -231,8 +233,8 @@ key_vault_name                   = "your-keyvault"
 virtual_network_name             = "your-vnet"
 subnet_name                      = "pe-subnet"
 vnet_resource_group_name         = "vnet-rg"
-secondary_dns_zone_resource_group   = "primary-dns-rg"
-primary_dns_zone_resource_group      = "secondary-dns-rg"
+secondary_dns_zone_resource_group = "oldhub-dns-rg"
+primary_dns_zone_resource_group   = "hub-dns-rg"
 ```
 
 **Note**: Subscription IDs are now configured via provider blocks in the calling module, not as variables.
@@ -242,7 +244,7 @@ primary_dns_zone_resource_group      = "secondary-dns-rg"
 account_replication_type           = "GRS"     # Default: "ZRS"
 blob_delete_retention_days         = 14        # Default: 7
 enable_primary_private_endpoints   = true      # Default: true
-enable_secondary_private_endpoints = false     # Default: false
+enable_secondary_private_endpoints = false     # Default: false; when true, mirrors primary IPs into hub DNS
 create_secondary_dns_vnet_links      = false     # Default: false (set true if VNet not already linked)
 ```
 
@@ -297,7 +299,7 @@ Expected result: **0 non-compliant policies**
 **Solution**: 
 1. Check DNS zone linked to VNet
 2. Verify private endpoint DNS zone group configuration
-3. Test with both primary and secondary endpoints
+3. Confirm the oldhub and hub DNS zones resolve to the same primary endpoint IPs
 
 ### Issue: Access Denied Errors
 **Solution**: This is expected! Public access is disabled. Access must be via:
@@ -343,13 +345,14 @@ If migrating from the archived AVM implementation:
 3. ⚠️ Test connectivity from applications
 4. 📊 Monitor for any policy violations
 5. 📝 Document final architecture
-6. 🔒 Enable secondary endpoints if cross-subscription DNS needed
+6. 🔒 Enable hub DNS record mirroring if hub-zone resolution is needed
 
 ## Support
 
 This implementation uses Terraform resources optimized for full CMK support:
 - `azapi_resource` (Microsoft.Storage/storageAccounts) - [Documentation](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/azapi_resource)
 - `azurerm_private_endpoint` - [Documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint)
+- `azurerm_private_dns_a_record` - [Documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_dns_a_record)
 - `azurerm_user_assigned_identity` - [Documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/user_assigned_identity)
 - `azurerm_key_vault_key` - [Documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault_key)
 

@@ -20,16 +20,16 @@ provider "azurerm" {
 }
 
 provider "azurerm" {
-  alias                      = "oldhub"
+  alias                      = "primary"
   features {}
-  subscription_id            = "your-oldhub-subscription-id"
+  subscription_id            = "your-hub-subscription-id"
   skip_provider_registration = true
 }
 
 provider "azurerm" {
-  alias                      = "hub"
+  alias                      = "secondary"
   features {}
-  subscription_id            = "your-hub-subscription-id"
+  subscription_id            = "your-oldhub-subscription-id"
   skip_provider_registration = true
 }
 
@@ -56,7 +56,7 @@ module "storage_account" {
   
   # Optional variables
   enable_primary_private_endpoints   = true
-  enable_secondary_private_endpoints = false
+  enable_secondary_private_endpoints = false # true mirrors primary endpoint IPs into hub DNS; no second endpoint
   account_replication_type           = "ZRS"
   create_secondary_dns_vnet_links      = true  # Set true if VNet not already linked to DNS zones
   

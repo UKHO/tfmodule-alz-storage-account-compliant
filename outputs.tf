@@ -37,17 +37,27 @@ output "file_primary_private_endpoint_id" {
 }
 
 # ==============================================================================
-# Private Endpoint Outputs - Secondary
+# Secondary DNS Record Outputs - Hub Zones
 # ==============================================================================
 
 output "blob_secondary_private_endpoint_id" {
-  description = "The ID of the secondary blob private endpoint"
-  value       = var.enable_secondary_private_endpoints ? azurerm_private_endpoint.blob_secondary[0].id : null
+  description = "Deprecated: no secondary blob private endpoint is created. Use blob_secondary_dns_record_id instead."
+  value       = null
 }
 
 output "file_secondary_private_endpoint_id" {
-  description = "The ID of the secondary file private endpoint"
-  value       = var.enable_secondary_private_endpoints ? azurerm_private_endpoint.file_secondary[0].id : null
+  description = "Deprecated: no secondary file private endpoint is created. Use file_secondary_dns_record_id instead."
+  value       = null
+}
+
+output "blob_secondary_dns_record_id" {
+  description = "The ID of the hub blob DNS A record pointing to the primary blob private endpoint IP"
+  value       = var.enable_secondary_private_endpoints ? azurerm_private_dns_a_record.blob_secondary[0].id : null
+}
+
+output "file_secondary_dns_record_id" {
+  description = "The ID of the hub file DNS A record pointing to the primary file private endpoint IP"
+  value       = var.enable_secondary_private_endpoints ? azurerm_private_dns_a_record.file_secondary[0].id : null
 }
 
 # ==============================================================================
