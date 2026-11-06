@@ -157,7 +157,7 @@ variable "enable_primary_private_endpoints" {
 }
 
 variable "enable_secondary_private_endpoints" {
-  description = "Enable secondary private endpoints (hub suffix, hub DNS zones for cross-subscription DNS)"
+  description = "Create blob and file A records in the hub DNS zones using the primary private endpoint IPs. Requires enable_primary_private_endpoints; does not create additional private endpoints."
   type        = bool
   default     = false
 }

@@ -55,59 +55,49 @@ resource "azurerm_private_endpoint" "file_primary" {
 }
 
 # ==============================================================================
-# Private Endpoints - Secondary (Cross-subscription DNS - hub subscription)
+# Secondary DNS Records (hub subscription)
 # ==============================================================================
 
-resource "azurerm_private_endpoint" "blob_secondary" {
+resource "azurerm_private_dns_a_record" "blob_secondary" {
   count               = var.enable_secondary_private_endpoints ? 1 : 0
-  name                = "${local.storage_account_name}-blob-pe-hub"
-  location            = data.azurerm_resource_group.main.location
-  resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = data.azurerm_subnet.main.id
+  name                = local.storage_account_name
+  resource_group_name = var.primary_dns_zone_resource_group
+  zone_name           = data.azurerm_private_dns_zone.storage_blob_primary[0].name
+  ttl                 = 10
+  records = var.enable_primary_private_endpoints ? [
+    azurerm_private_endpoint.blob_primary[0].private_service_connection[0].private_ip_address
+  ] : []
 
-  private_service_connection {
-    name                           = "pse-${local.storage_account_name}-blob-hub"
-    private_connection_resource_id = local.storage_account_id
-    is_manual_connection           = false
-    subresource_names              = ["blob"]
+  lifecycle {
+    precondition {
+      condition     = var.enable_primary_private_endpoints
+      error_message = "enable_primary_private_endpoints must be true when enable_secondary_private_endpoints is true, because the hub DNS record uses the primary endpoint IP."
+    }
   }
 
-  private_dns_zone_group {
-    name                 = "default"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.storage_blob_primary[0].id]
-  }
-
-  tags = merge(var.tags, {
-    "Purpose" = "Cross-Subscription-DNS"
-  })
-
-  depends_on = [azapi_resource.storage_account]
+  tags     = var.tags
+  provider = azurerm.primary
 }
 
-resource "azurerm_private_endpoint" "file_secondary" {
+resource "azurerm_private_dns_a_record" "file_secondary" {
   count               = var.enable_secondary_private_endpoints ? 1 : 0
-  name                = "${local.storage_account_name}-file-pe-hub"
-  location            = data.azurerm_resource_group.main.location
-  resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = data.azurerm_subnet.main.id
+  name                = local.storage_account_name
+  resource_group_name = var.primary_dns_zone_resource_group
+  zone_name           = data.azurerm_private_dns_zone.storage_file_primary[0].name
+  ttl                 = 10
+  records = var.enable_primary_private_endpoints ? [
+    azurerm_private_endpoint.file_primary[0].private_service_connection[0].private_ip_address
+  ] : []
 
-  private_service_connection {
-    name                           = "pse-${local.storage_account_name}-file-hub"
-    private_connection_resource_id = local.storage_account_id
-    is_manual_connection           = false
-    subresource_names              = ["file"]
+  lifecycle {
+    precondition {
+      condition     = var.enable_primary_private_endpoints
+      error_message = "enable_primary_private_endpoints must be true when enable_secondary_private_endpoints is true, because the hub DNS record uses the primary endpoint IP."
+    }
   }
 
-  private_dns_zone_group {
-    name                 = "default"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.storage_file_primary[0].id]
-  }
-
-  tags = merge(var.tags, {
-    "Purpose" = "Cross-Subscription-DNS"
-  })
-
-  depends_on = [azapi_resource.storage_account]
+  tags     = var.tags
+  provider = azurerm.primary
 }
 
 # ==============================================================================
